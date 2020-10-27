@@ -60,7 +60,7 @@ namespace EpPathFinding.cs
     {
         [System.Obsolete("This constructor is deprecated, please use the Constructor with EndNodeUnWalkableTreatment and DiagonalMovement instead.")]
         public JumpPointParam(BaseGrid iGrid, GridPos iStartPos, GridPos iEndPos, bool iAllowEndNodeUnWalkable = true, bool iCrossCorner = true, bool iCrossAdjacentPoint = true, HeuristicMode iMode = HeuristicMode.EUCLIDEAN)
-            :base(iGrid, iStartPos, iEndPos, Util.GetDiagonalMovement(iCrossCorner, iCrossAdjacentPoint), iMode)
+            : base(iGrid, iStartPos, iEndPos, Util.GetDiagonalMovement(iCrossCorner, iCrossAdjacentPoint), iMode)
         {
             CurEndNodeUnWalkableTreatment = iAllowEndNodeUnWalkable ? EndNodeUnWalkableTreatment.ALLOW : EndNodeUnWalkableTreatment.DISALLOW;
             openList = new IntervalHeap<Node>();
@@ -79,8 +79,8 @@ namespace EpPathFinding.cs
         }
 
         [System.Obsolete("This constructor is deprecated, please use the Constructor with EndNodeUnWalkableTreatment and DiagonalMovement instead.")]
-        public JumpPointParam(BaseGrid iGrid, GridPos iStartPos, GridPos iEndPos, bool iAllowEndNodeUnWalkable = true, DiagonalMovement iDiagonalMovement= DiagonalMovement.Always, HeuristicMode iMode = HeuristicMode.EUCLIDEAN)
-            : base(iGrid,iStartPos,iEndPos, iDiagonalMovement, iMode)
+        public JumpPointParam(BaseGrid iGrid, GridPos iStartPos, GridPos iEndPos, bool iAllowEndNodeUnWalkable = true, DiagonalMovement iDiagonalMovement = DiagonalMovement.Always, HeuristicMode iMode = HeuristicMode.EUCLIDEAN)
+            : base(iGrid, iStartPos, iEndPos, iDiagonalMovement, iMode)
         {
 
             CurEndNodeUnWalkableTreatment = iAllowEndNodeUnWalkable ? EndNodeUnWalkableTreatment.ALLOW : EndNodeUnWalkableTreatment.DISALLOW;
@@ -90,11 +90,11 @@ namespace EpPathFinding.cs
         }
 
         [System.Obsolete("This constructor is deprecated, please use the Constructor with EndNodeUnWalkableTreatment and DiagonalMovement instead.")]
-        public JumpPointParam(BaseGrid iGrid, bool iAllowEndNodeUnWalkable = true, DiagonalMovement iDiagonalMovement= DiagonalMovement.Always, HeuristicMode iMode = HeuristicMode.EUCLIDEAN)
+        public JumpPointParam(BaseGrid iGrid, bool iAllowEndNodeUnWalkable = true, DiagonalMovement iDiagonalMovement = DiagonalMovement.Always, HeuristicMode iMode = HeuristicMode.EUCLIDEAN)
             : base(iGrid, iDiagonalMovement, iMode)
         {
             CurEndNodeUnWalkableTreatment = iAllowEndNodeUnWalkable ? EndNodeUnWalkableTreatment.ALLOW : EndNodeUnWalkableTreatment.DISALLOW;
-            
+
             openList = new IntervalHeap<Node>();
             CurIterationType = IterationType.LOOP;
         }
@@ -120,7 +120,7 @@ namespace EpPathFinding.cs
         }
 
 
-        public JumpPointParam(JumpPointParam b):base(b)
+        public JumpPointParam(JumpPointParam b) : base(b)
         {
             m_heuristic = b.m_heuristic;
             CurEndNodeUnWalkableTreatment = b.CurEndNodeUnWalkableTreatment;
@@ -156,7 +156,7 @@ namespace EpPathFinding.cs
         {
             get
             {
-                return CurIterationType==IterationType.RECURSIVE;
+                return CurIterationType == IterationType.RECURSIVE;
             }
             set
             {
@@ -255,6 +255,7 @@ namespace EpPathFinding.cs
                     return Node.Backtrace(tNode); // rebuilding path
                 }
 
+                // 寻找当前节点的继任节点
                 identifySuccessors(iParam, tNode);
             }
 
@@ -267,6 +268,7 @@ namespace EpPathFinding.cs
             return new List<GridPos>();
         }
 
+        // 根据父节点的方向，寻找跳点，找到了就加入OpenList里
         private static void identifySuccessors(JumpPointParam iParam, Node iNode)
         {
             HeuristicDelegate tHeuristic = iParam.HeuristicFunc;
@@ -277,11 +279,12 @@ namespace EpPathFinding.cs
             GridPos tJumpPoint;
             Node tJumpNode;
 
+            // 寻找iNode的邻居节点，包括自然邻居和强迫邻居
             List<GridPos> tNeighbors = findNeighbors(iParam, iNode);
             for (int i = 0; i < tNeighbors.Count; i++)
             {
                 tNeighbor = tNeighbors[i];
-                if (iParam.CurIterationType==IterationType.RECURSIVE)
+                if (iParam.CurIterationType == IterationType.RECURSIVE)
                     tJumpPoint = jump(iParam, tNeighbor.x, tNeighbor.y, iNode.x, iNode.y);
                 else
                     tJumpPoint = jumpLoop(iParam, tNeighbor.x, tNeighbor.y, iNode.x, iNode.y);
@@ -441,7 +444,7 @@ namespace EpPathFinding.cs
                                 stack.Push(newSnapshot);
                                 continue;
                             }
-                            else if (iParam.DiagonalMovement==DiagonalMovement.Always)
+                            else if (iParam.DiagonalMovement == DiagonalMovement.Always)
                             {
                                 newSnapshot = new JumpSnapshot();
                                 newSnapshot.iX = currentSnapshot.iX + currentSnapshot.tDx;
@@ -528,7 +531,7 @@ namespace EpPathFinding.cs
                                 // moving along x
                                 if (!iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX + currentSnapshot.tDx, currentSnapshot.iY))
                                 {
-                                    retVal= new GridPos(iX, iY);
+                                    retVal = new GridPos(iX, iY);
                                     continue;
                                 }
                             }
@@ -612,7 +615,7 @@ namespace EpPathFinding.cs
                             stack.Push(newSnapshot);
                             continue;
                         }
-                        else if (iParam.DiagonalMovement==DiagonalMovement.Always)
+                        else if (iParam.DiagonalMovement == DiagonalMovement.Always)
                         {
                             newSnapshot = new JumpSnapshot();
                             newSnapshot.iX = currentSnapshot.iX + currentSnapshot.tDx;
@@ -726,12 +729,15 @@ namespace EpPathFinding.cs
             return retVal;
 
         }
+        // 从iX，iY位置出发，延[iPx, iPy]方向寻找跳点
         private static GridPos jump(JumpPointParam iParam, int iX, int iY, int iPx, int iPy)
         {
+            // 如果遇到障碍物或者遇到边界
             if (!iParam.SearchGrid.IsWalkableAt(iX, iY))
             {
                 return null;
             }
+            // 如果寻找到终点
             else if (iParam.SearchGrid.GetNodeAt(iX, iY).Equals(iParam.EndNode))
             {
                 return new GridPos(iX, iY);
@@ -741,10 +747,12 @@ namespace EpPathFinding.cs
             int tDy = iY - iPy;
             if (iParam.DiagonalMovement == DiagonalMovement.Always || iParam.DiagonalMovement == DiagonalMovement.IfAtLeastOneWalkable)
             {
+                // 1. 先判断此方向的节点是否有强迫节点
                 // check for forced neighbors
                 // along the diagonal
                 if (tDx != 0 && tDy != 0)
                 {
+                    // 斜向方向，如果存在强迫邻居，则该点为跳点
                     if ((iParam.SearchGrid.IsWalkableAt(iX - tDx, iY + tDy) && !iParam.SearchGrid.IsWalkableAt(iX - tDx, iY)) ||
                         (iParam.SearchGrid.IsWalkableAt(iX + tDx, iY - tDy) && !iParam.SearchGrid.IsWalkableAt(iX, iY - tDy)))
                     {
@@ -772,19 +780,25 @@ namespace EpPathFinding.cs
                         }
                     }
                 }
+
+                // 2. 检查完强迫邻居后，分解为两个方向寻找跳点
                 // when moving diagonally, must check for vertical/horizontal jump points
                 if (tDx != 0 && tDy != 0)
                 {
+                    // 从两个方向查找，只要存在跳点，证明这里是拐点，也是跳点
+                    // 水平方向查找，找到了即返回
                     if (jump(iParam, iX + tDx, iY, iX, iY) != null)
                     {
                         return new GridPos(iX, iY);
                     }
+                    // 竖直方向查找，找到了即返回
                     if (jump(iParam, iX, iY + tDy, iX, iY) != null)
                     {
                         return new GridPos(iX, iY);
                     }
                 }
 
+                // 如果分解方向没有找到，说明这个点不是跳点，则返回下一个斜向点
                 // moving diagonally, must make sure one of the vertical/horizontal
                 // neighbors is open to allow the path
                 if (iParam.SearchGrid.IsWalkableAt(iX + tDx, iY) || iParam.SearchGrid.IsWalkableAt(iX, iY + tDy))
@@ -806,7 +820,7 @@ namespace EpPathFinding.cs
                 // along the diagonal
                 if (tDx != 0 && tDy != 0)
                 {
-                    if (iParam.SearchGrid.IsWalkableAt(iX + tDx, iY + tDy) && ( !iParam.SearchGrid.IsWalkableAt(iX, iY + tDy) || !iParam.SearchGrid.IsWalkableAt(iX + tDx, iY)))
+                    if (iParam.SearchGrid.IsWalkableAt(iX + tDx, iY + tDy) && (!iParam.SearchGrid.IsWalkableAt(iX, iY + tDy) || !iParam.SearchGrid.IsWalkableAt(iX + tDx, iY)))
                     {
                         return new GridPos(iX, iY);
                     }
@@ -871,7 +885,7 @@ namespace EpPathFinding.cs
                 }
 
                 //  must check for perpendicular jump points
-                if (tDx != 0 )
+                if (tDx != 0)
                 {
                     if (jump(iParam, iX, iY + 1, iX, iY) != null) return new GridPos(iX, iY);
                     if (jump(iParam, iX, iY - 1, iX, iY) != null) return new GridPos(iX, iY);
@@ -894,6 +908,7 @@ namespace EpPathFinding.cs
             }
         }
 
+        // 寻找周围的邻居，这些邻居被修剪过的，只可能是自然邻居或强迫邻居
         private static List<GridPos> findNeighbors(JumpPointParam iParam, Node iNode)
         {
             Node tParent = (Node)iNode.parent;
@@ -905,29 +920,33 @@ namespace EpPathFinding.cs
             List<Node> tNeighborNodes;
             Node tNeighborNode;
 
+            // 如果存在父节点，正常情况下都会存在父节点，除了对起始节点的处理
             // directed pruning: can ignore most neighbors, unless forced.
             if (tParent != null)
             {
                 tPx = tParent.x;
                 tPy = tParent.y;
-                // get the normalized direction of travel
+                // 归一化parten->cur的方向，因为parent也是跳点，这里只需要知道方向就行了
                 tDx = (tX - tPx) / Math.Max(Math.Abs(tX - tPx), 1);
                 tDy = (tY - tPy) / Math.Max(Math.Abs(tY - tPy), 1);
 
+                // 如果允许斜向运动
                 if (iParam.DiagonalMovement == DiagonalMovement.Always || iParam.DiagonalMovement == DiagonalMovement.IfAtLeastOneWalkable)
                 {
-                    // search diagonally
+                    // 斜向，斜向情况有三个自然节点
                     if (tDx != 0 && tDy != 0)
                     {
+                        // 竖直方向
                         if (iParam.SearchGrid.IsWalkableAt(tX, tY + tDy))
                         {
                             tNeighbors.Add(new GridPos(tX, tY + tDy));
                         }
+                        // 水平方向
                         if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY))
                         {
                             tNeighbors.Add(new GridPos(tX + tDx, tY));
                         }
-
+                        // 斜向
                         if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY + tDy))
                         {
                             if (iParam.SearchGrid.IsWalkableAt(tX, tY + tDy) || iParam.SearchGrid.IsWalkableAt(tX + tDx, tY))
@@ -940,6 +959,7 @@ namespace EpPathFinding.cs
                             }
                         }
 
+                        // 如果左上角可以走，而且左边不可走，则左上角是一个强迫邻居
                         if (iParam.SearchGrid.IsWalkableAt(tX - tDx, tY + tDy) && !iParam.SearchGrid.IsWalkableAt(tX - tDx, tY))
                         {
                             if (iParam.SearchGrid.IsWalkableAt(tX, tY + tDy))
@@ -952,6 +972,7 @@ namespace EpPathFinding.cs
                             }
                         }
 
+                        // 如果右下角可以走，而且下边不可走，则右下角是一个强迫邻居
                         if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY - tDy) && !iParam.SearchGrid.IsWalkableAt(tX, tY - tDy))
                         {
                             if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY))
@@ -963,19 +984,20 @@ namespace EpPathFinding.cs
                                 tNeighbors.Add(new GridPos(tX + tDx, tY - tDy));
                             }
                         }
-
-
                     }
                     // search horizontally/vertically
                     else
                     {
+                        // 水平向
                         if (tDx != 0)
                         {
+                            // 如果存在自然邻居
                             if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY))
                             {
-
+                                // 加入自然邻居
                                 tNeighbors.Add(new GridPos(tX + tDx, tY));
 
+                                // 再分别判断两边是否存在强迫邻居
                                 if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY + 1) && !iParam.SearchGrid.IsWalkableAt(tX, tY + 1))
                                 {
                                     tNeighbors.Add(new GridPos(tX + tDx, tY + 1));
@@ -987,6 +1009,7 @@ namespace EpPathFinding.cs
                             }
                             else if (iParam.DiagonalMovement == DiagonalMovement.Always)
                             {
+                                // 如果不存在自然邻居，则检查强迫邻居
                                 if (iParam.SearchGrid.IsWalkableAt(tX + tDx, tY + 1) && !iParam.SearchGrid.IsWalkableAt(tX, tY + 1))
                                 {
                                     tNeighbors.Add(new GridPos(tX + tDx, tY + 1));
@@ -997,6 +1020,7 @@ namespace EpPathFinding.cs
                                 }
                             }
                         }
+                        // 竖直向，与水平向是一样的
                         else
                         {
                             if (iParam.SearchGrid.IsWalkableAt(tX, tY + tDy))
@@ -1116,7 +1140,7 @@ namespace EpPathFinding.cs
                         }
                         if (iParam.SearchGrid.IsWalkableAt(tX, tY + 1))
                         {
-                            tNeighbors.Add(new GridPos(tX, tY +1));
+                            tNeighbors.Add(new GridPos(tX, tY + 1));
                         }
                         if (iParam.SearchGrid.IsWalkableAt(tX, tY - 1))
                         {
@@ -1125,7 +1149,7 @@ namespace EpPathFinding.cs
                     }
                     else // if (tDy != 0)
                     {
-                        if (iParam.SearchGrid.IsWalkableAt(tX, tY +tDy))
+                        if (iParam.SearchGrid.IsWalkableAt(tX, tY + tDy))
                         {
                             tNeighbors.Add(new GridPos(tX, tY + tDy));
                         }
