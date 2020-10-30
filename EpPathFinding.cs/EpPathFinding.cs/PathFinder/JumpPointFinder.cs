@@ -284,8 +284,11 @@ namespace EpPathFinding.cs
             for (int i = 0; i < tNeighbors.Count; i++)
             {
                 tNeighbor = tNeighbors[i];
+                // 根据参数类型的不同，有两种方式的跳点寻找函数
+                // 第一种是递归型，会沿着方向一直到寻找跳点，或者不存在跳点，才return
                 if (iParam.CurIterationType == IterationType.RECURSIVE)
                     tJumpPoint = jump(iParam, tNeighbor.x, tNeighbor.y, iNode.x, iNode.y);
+                // 第二种是循环型，默认好像是第二种
                 else
                     tJumpPoint = jumpLoop(iParam, tNeighbor.x, tNeighbor.y, iNode.x, iNode.y);
                 if (tJumpPoint != null)
@@ -321,6 +324,7 @@ namespace EpPathFinding.cs
             }
         }
 
+        // Snapshot用来每一次查找路点的情况
         private class JumpSnapshot
         {
             public int iX;
@@ -343,9 +347,14 @@ namespace EpPathFinding.cs
             }
         }
 
+        // 由于jump函数可能会沿着一个方向递归很多次，所以这个函数进行了改进
+        // 通过创建JumpSnapshot对象，把每一次节点间的寻路信息记录下来
+        // 然后放到Stack中，不断循环
         private static GridPos jumpLoop(JumpPointParam iParam, int iX, int iY, int iPx, int iPy)
         {
+            // 这里的retVal应该是作为记录值，保存斜向时，出现的第三种情况(也就是竖直水平方向存在跳点)的跳点
             GridPos retVal = null;
+            // 用stack作为Jump过程中的OpenList
             Stack<JumpSnapshot> stack = new Stack<JumpSnapshot>();
 
             JumpSnapshot currentSnapshot = new JumpSnapshot();
@@ -363,11 +372,13 @@ namespace EpPathFinding.cs
                 switch (currentSnapshot.stage)
                 {
                     case 0:
+                        // 如果当前位置能不能走
                         if (!iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX, currentSnapshot.iY))
                         {
                             retVal = null;
                             continue;
                         }
+                        // 找到终点
                         else if (iParam.SearchGrid.GetNodeAt(currentSnapshot.iX, currentSnapshot.iY).Equals(iParam.EndNode))
                         {
                             retVal = new GridPos(currentSnapshot.iX, currentSnapshot.iY);
@@ -378,8 +389,11 @@ namespace EpPathFinding.cs
                         currentSnapshot.tDy = currentSnapshot.iY - currentSnapshot.iPy;
                         if (iParam.DiagonalMovement == DiagonalMovement.Always || iParam.DiagonalMovement == DiagonalMovement.IfAtLeastOneWalkable)
                         {
+                            // 1.首先判断是否存在强迫邻居，若存在，说明找到跳点，给retVal赋值
                             // check for forced neighbors
                             // along the diagonal
+                            
+                            // 斜向判断强迫邻居
                             if (currentSnapshot.tDx != 0 && currentSnapshot.tDy != 0)
                             {
                                 if ((iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX - currentSnapshot.tDx, currentSnapshot.iY + currentSnapshot.tDy) && !iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX - currentSnapshot.tDx, currentSnapshot.iY)) ||
@@ -390,6 +404,7 @@ namespace EpPathFinding.cs
                                 }
                             }
                             // horizontally/vertically
+                            // 水平或竖直向判断强迫邻居
                             else
                             {
                                 if (currentSnapshot.tDx != 0)
@@ -412,7 +427,16 @@ namespace EpPathFinding.cs
                                     }
                                 }
                             }
+
+                            // 2. 判断完强迫邻居后，则开始类似递归的处理
+
                             // when moving diagonally, must check for vertical/horizontal jump points
+                            // 这里的斜向点记为Node, 则Node作为一个分支加进了stack里，斜向拓展为了三个分支
+                            // stage0阶段下添加水平方向的snapshot
+                            // stage1阶段下添加垂直方向的snapshot
+                            // stage2阶段下添加斜方向的snapshot
+                            // 如果在分支里找到了跳点，则用retVal记录下来
+                            // 这里的Node属于第三种情况的跳点，所以要用Node去覆盖分支找到的retVal
                             if (currentSnapshot.tDx != 0 && currentSnapshot.tDy != 0)
                             {
                                 currentSnapshot.stage = 1;
@@ -430,9 +454,6 @@ namespace EpPathFinding.cs
 
                             // moving diagonally, must make sure one of the vertical/horizontal
                             // neighbors is open to allow the path
-
-                            // moving diagonally, must make sure one of the vertical/horizontal
-                            // neighbors is open to allow the path
                             if (iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX + currentSnapshot.tDx, currentSnapshot.iY) || iParam.SearchGrid.IsWalkableAt(currentSnapshot.iX, currentSnapshot.iY + currentSnapshot.tDy))
                             {
                                 newSnapshot = new JumpSnapshot();
@@ -446,6 +467,7 @@ namespace EpPathFinding.cs
                             }
                             else if (iParam.DiagonalMovement == DiagonalMovement.Always)
                             {
+                                // 对于垂直或水平向的查找，创建新的snapshot加入到stack中
                                 newSnapshot = new JumpSnapshot();
                                 newSnapshot.iX = currentSnapshot.iX + currentSnapshot.tDx;
                                 newSnapshot.iY = currentSnapshot.iY + currentSnapshot.tDy;
@@ -578,6 +600,7 @@ namespace EpPathFinding.cs
                         retVal = null;
                         break;
                     case 1:
+                        // case != 0 都说明这是斜向的拓展节点，这里是为了override第三种跳点的分解方向上得到的跳点
                         if (retVal != null)
                         {
                             retVal = new GridPos(currentSnapshot.iX, currentSnapshot.iY);
